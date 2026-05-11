@@ -1,0 +1,204 @@
+<template>
+  <div class="form-page-template">
+    <div class="form-page-template__header">
+      <span class="title">{{ pageTitle }}</span>
+      <div>
+        <el-button size="small" @click="handleCancel">返回</el-button>
+        <el-button v-if="!isView" type="primary" size="small" :loading="submitting" @click="handleSubmit">
+          保存
+        </el-button>
+      </div>
+    </div>
+
+    <el-form
+      ref="formRef"
+      class="form_info"
+      :model="form"
+      :rules="isView ? null : rules"
+      label-width="120px"
+      size="small"
+      :disabled="isView"
+    >
+<%_ if (fields && fields.length) { _%>
+<%_ fields.forEach(function (field) { _%>
+<%_   var prop = field.name; var label = field.label || field.name; _%>
+      <el-form-item label="<%= label %>" prop="<%= prop %>">
+<%_   if (field.type === 'boolean') { _%>
+        <el-switch v-model="form.<%= prop %>" />
+<%_   } else if (field.type === 'date') { _%>
+        <el-date-picker v-model="form.<%= prop %>" type="date" placeholder="请选择" style="width: 100%" value-format="yyyy-MM-dd" />
+<%_   } else { _%>
+        <el-input v-model="form.<%= prop %>" placeholder="请输入<%= label %>" />
+<%_   } _%>
+      </el-form-item>
+<%_ }) _%>
+<%_ } else { _%>
+      <el-form-item label="名称" prop="name">
+        <el-input v-model="form.name" maxlength="64" show-word-limit placeholder="请输入名称" />
+      </el-form-item>
+      <el-form-item label="编码" prop="code">
+        <el-input v-model="form.code" placeholder="请输入编码" />
+      </el-form-item>
+      <el-form-item label="排序" prop="sortNo">
+        <el-input v-model="form.sortNo" placeholder="请输入数字" />
+      </el-form-item>
+      <el-form-item label="备注" prop="remark">
+        <el-input v-model="form.remark" type="textarea" :rows="4" placeholder="请输入备注" />
+      </el-form-item>
+<%_ } _%>
+    </el-form>
+  </div>
+</template>
+
+<script>
+import mixin from '@m/core/mixin'
+
+/**
+ * 表单页模版：校验、提交、详情回显 — 由 EJS 生成
+ * 路由示例：?id=xxx&mode=edit | add | view
+ */
+export default {
+  name: '<%= componentName %>',
+  mixins: [mixin],
+  data() {
+    const validateSortNo = (rule, value, callback) => {
+      if (value === '' || value === null || value === undefined) {
+        callback()
+        return
+      }
+      if (Number.isNaN(Number(String(value).trim()))) {
+        callback(new Error('排序请输入数字'))
+      } else {
+        callback()
+      }
+    }
+    return {
+      submitting: false,
+      form: {
+<%_ if (fields && fields.length) { _%>
+<%_ fields.forEach(function (field, idx) { _%>
+<%_
+  var initial = field.type === 'number' ? '0' : (field.type === 'boolean' ? 'false' : "''");
+_%>
+        <%= field.name %>: <%= initial %><%= idx < fields.length - 1 ? ',' : '' %>
+<%_ }) _%>
+<%_ } else { _%>
+        id: '',
+        name: '',
+        code: '',
+        sortNo: '',
+        remark: '',
+<%_ } _%>
+      },
+      rules: {
+<%_ if (fields && fields.length) { _%>
+<%_ fields.forEach(function (field) { _%>
+<%_   if (field.required) { _%>
+        <%= field.name %>: [{ required: true, message: '请填写<%= field.label || field.name %>', trigger: 'blur' }],
+<%_   } _%>
+<%_ }) _%>
+<%_ } else { _%>
+        name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
+        code: [{ required: true, message: '请输入编码', trigger: 'blur' }],
+        sortNo: [{ validator: validateSortNo, trigger: 'blur' }],
+<%_ } _%>
+      },
+    }
+  },
+  computed: {
+    mode() {
+      return this.$route.query.mode || 'add'
+    },
+    isView() {
+      return this.mode === 'view'
+    },
+    pageTitle() {
+      if (this.mode === 'view') return '查看'
+      if (this.mode === 'edit') return '编辑'
+      return '新增'
+    },
+  },
+  mounted() {
+    if (this.$route.query.id) {
+      this.loadDetail(this.$route.query.id)
+    }
+  },
+  methods: {
+    async loadDetail(id) {
+      try {
+        const res = await this.rpc.<%= rpcNamespace %>.getDetail({ id })
+<%_ if (fields && fields.length) { _%>
+        Object.assign(this.form, res || {})
+<%_ } else { _%>
+        this.form = {
+          ...this.form,
+          id: res.id,
+          name: res.name,
+          code: res.code,
+          sortNo: res.sortNo != null ? String(res.sortNo) : '',
+          remark: res.remark || '',
+        }
+<%_ } _%>
+      } catch (e) {
+        this.$message.warning((e && e.message) || '详情接口未配置（模版占位）')
+      }
+    },
+    handleCancel() {
+      this.$router.back()
+    },
+    handleSubmit() {
+      this.$refs.formRef.validate(async (valid) => {
+        if (!valid) return
+        this.submitting = true
+        try {
+          await this.rpc.<%= rpcNamespace %>.save({
+<%_ if (fields && fields.length) { _%>
+            ...this.form,
+            id: this.form.id || undefined,
+<%_ } else { _%>
+            id: this.form.id || undefined,
+            name: this.form.name,
+            code: this.form.code,
+            sortNo: this.form.sortNo,
+            remark: this.form.remark,
+<%_ } _%>
+          })
+          this.$message.success('保存成功')
+          this.$router.back()
+        } catch (e) {
+          this.$message.error((e && e.message) || '保存失败')
+        } finally {
+          this.submitting = false
+        }
+      })
+    },
+  },
+}
+</script>
+
+<style lang="scss" scoped>
+@import '<%= tokensImport %>';
+
+.form-page-template {
+  padding: 16px 24px;
+  background: $base_white;
+  min-height: 100%;
+
+  &__header {
+    @include flex(row, space-between, center);
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $pri_br_color;
+
+    .title {
+      font-size: 16px;
+      font-weight: 600;
+      color: $pri_ft_color;
+    }
+  }
+}
+
+.form_info {
+  max-width: 640px;
+}
+</style>

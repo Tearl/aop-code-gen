@@ -1,0 +1,19 @@
+/**
+ * 路由 map 片段 — EJS 生成示例（与 core/router/map/*.js 懒加载形式一致）
+ */
+export default [
+  {
+    path: '<%= routePath %>',
+    component: () => import('@m/views/<%= componentKebab %>/index.vue'),
+    meta: {
+      title: '<%= componentName.replace(/View$/, '') %>',
+    },
+  },
+  {
+    path: '<%= routePath %>/form',
+    component: () => import('@m/views/<%= componentKebab %>/form.vue'),
+    meta: {
+      title: '<%= componentName.replace(/View$/, '') %>-表单',
+    },
+  },
+]

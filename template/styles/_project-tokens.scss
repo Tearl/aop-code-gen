@@ -1,0 +1,39 @@
+// 摘自 aop-h5-l5：src/modules/aop_projectmanage/assets/css/mixin.scss（核心变量与常用混入，便于模版目录自洽）
+// 落地到子工程后建议改为：@import '@m/assets/css/mixin.scss';
+
+@mixin flex($d, $j, $a) {
+  display: flex;
+  flex-direction: $d;
+  justify-content: $j;
+  align-items: $a;
+}
+
+@mixin scrollbar {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+$theme_color: #358aff;
+$theme_color_light: #f0f5ff;
+$table_bg_color: #f5f5f8;
+$pri_ft_color: #131313;
+$reg_ft_color: #333;
+$sec_ft_color: #999;
+$pri_br_color: #dcdfe6;
+$base_white: #fff;
+$base_bg_color: #fafafc;
+$theme_radius: 2px;
+$fs14: 14px;
+
+@mixin list-toolbar {
+  @include flex(row, space-between, center);
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+@mixin table-header-cell {
+  background: $table_bg_color;
+  color: $reg_ft_color;
+}

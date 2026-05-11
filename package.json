@@ -1,0 +1,14 @@
+
+{
+  "name": "aop-h5-code-generator",
+  "version": "0.0.1",
+  "description": "QClaw Skill for generating AOP H5 code from Swagger",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "ejs": "^3.1.9"
+  }
+}

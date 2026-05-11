@@ -1,0 +1,228 @@
+<template>
+  <div class="list-page-template">
+    <div class="search-form">
+      <div class="search-form__left">
+        <el-form ref="searchFormRef" :model="searchForm" :inline="true" size="small">
+          <el-form-item label="关键词">
+            <el-input
+              v-model="searchForm.keyword"
+              clearable
+              placeholder="请输入"
+              @keyup.enter.native="handleSearch"
+            />
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="searchForm.status" clearable placeholder="全部" style="width: 140px">
+              <el-option label="草稿" value="00" />
+              <el-option label="已生效" value="02" />
+            </el-select>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="search-form__right">
+        <el-button type="primary" size="small" @click="handleSearch">搜索</el-button>
+        <el-button size="small" @click="handleReset">重置</el-button>
+      </div>
+    </div>
+
+    <div class="list-page-template__content">
+      <div class="toolbar">
+        <span class="toolbar__title">列表示例</span>
+        <div class="toolbar__actions">
+          <el-button type="danger" size="small" plain :disabled="!selectedRows.length" @click="handleBatchDelete">
+            批量删除
+          </el-button>
+          <el-button type="primary" size="small" plain :disabled="!selectedRows.length" @click="handleBatchExport">
+            批量导出
+          </el-button>
+          <el-button type="primary" size="small" icon="el-icon-plus" @click="handleCreate">新增</el-button>
+        </div>
+      </div>
+
+      <el-table
+        ref="tableRef"
+        v-loading="loading"
+        :data="tableData"
+        border
+        size="small"
+        align="center"
+        :stripe="false"
+        :header-cell-style="headerCellStyle"
+        @selection-change="onSelectionChange"
+      >
+        <el-table-column type="selection" width="48" fixed="left" />
+<%_ if (fields && fields.length) { _%>
+<%_ fields.forEach(function (col) { _%>
+        <el-table-column prop="<%= col.name %>" label="<%= col.label || col.name %>" min-width="120" show-overflow-tooltip />
+<%_ }) _%>
+<%_ } else { _%>
+        <el-table-column prop="id" label="ID" min-width="100" show-overflow-tooltip />
+        <el-table-column prop="name" label="名称" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="100">
+          <template slot-scope="scope">
+            {{ scope.row.status === '02' ? '已生效' : '草稿' }}
+          </template>
+        </el-table-column>
+<%_ } _%>
+        <el-table-column label="操作" width="160" fixed="right">
+          <template slot-scope="scope">
+            <el-button type="text" size="small" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button type="text" size="small" @click="handleView(scope.row)">查看</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div v-if="total > 0" class="pagination-wrapper">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          :current-page.sync="currentPage"
+          :page-sizes="[10, 20, 30, 50]"
+          :page-size.sync="pageSize"
+          :total="total"
+          @size-change="fetchList"
+          @current-change="fetchList"
+        />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import mixin from '@m/core/mixin'
+
+/**
+ * 列表页模版（Vue 2 + Element UI）— 由 EJS 生成
+ * 与工程一致：core/mixin 挂载 this.rpc，接口定义在 core/mixin/rpc/map/*.js
+ */
+export default {
+  name: '<%= componentName %>',
+  mixins: [mixin],
+  data() {
+    return {
+      loading: false,
+      searchForm: {
+        keyword: '',
+        status: '',
+      },
+      tableData: [],
+      selectedRows: [],
+      currentPage: 1,
+      pageSize: 10,
+      total: 0,
+      headerCellStyle: {
+        background: '#F5F5F8',
+        color: '#333',
+      },
+    }
+  },
+  mounted() {
+    this.fetchList()
+  },
+  methods: {
+    onSelectionChange(rows) {
+      this.selectedRows = rows
+    },
+    handleSearch() {
+      this.currentPage = 1
+      this.fetchList()
+    },
+    handleReset() {
+      this.searchForm = { keyword: '', status: '' }
+      this.currentPage = 1
+      this.fetchList()
+    },
+    async fetchList() {
+      this.loading = true
+      try {
+        const res = await this.rpc.<%= rpcNamespace %>.qryPageList({
+          keyword: this.searchForm.keyword,
+          status: this.searchForm.status,
+          currentPage: this.currentPage,
+          turnPageShowNum: this.pageSize,
+        })
+        this.tableData = res.list || []
+        this.total = Number(res.turnPageTotalNum) || 0
+      } catch (e) {
+        this.tableData = []
+        this.total = 0
+        this.$message.warning((e && e.message) || '列表接口未配置或调用失败（模版占位）')
+      } finally {
+        this.loading = false
+      }
+    },
+    handleBatchDelete() {
+      const ids = this.selectedRows.map((r) => r.id)
+      this.$confirm(`确定删除选中的 ${ids.length} 条？`, '提示', { type: 'warning' })
+        .then(() => {
+          this.$message.success('已提交删除（示例）')
+          this.fetchList()
+        })
+        .catch(() => {})
+    },
+    handleBatchExport() {
+      this.$message.info(`导出 ${this.selectedRows.length} 条（示例）`)
+    },
+    handleCreate() {
+      this.$message.info('跳转新增页（示例）')
+    },
+    handleEdit(row) {
+      this.$message.info(`编辑 ${row.id}（示例）`)
+    },
+    handleView(row) {
+      this.$message.info(`查看 ${row.id}（示例）`)
+    },
+  },
+}
+</script>
+
+<style lang="scss" scoped>
+@import '<%= tokensImport %>';
+
+.list-page-template {
+  padding: 16px;
+  background: $base_bg_color;
+  min-height: 100%;
+}
+
+.search-form {
+  @include flex(row, space-between, flex-start);
+  flex-wrap: wrap;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: $base_white;
+  border-radius: $theme_radius;
+
+  &__right {
+    @include flex(row, flex-end, center);
+    gap: 8px;
+    padding-top: 4px;
+  }
+}
+
+.list-page-template__content {
+  padding: 16px;
+  background: $base_white;
+  border-radius: $theme_radius;
+}
+
+.toolbar {
+  @include list-toolbar;
+
+  &__title {
+    font-size: $fs14;
+    font-weight: 600;
+    color: $pri_ft_color;
+  }
+
+  &__actions {
+    @include flex(row, flex-end, center);
+    gap: 8px;
+  }
+}
+
+.pagination-wrapper {
+  margin-top: 16px;
+  @include flex(row, flex-end, center);
+}
+</style>

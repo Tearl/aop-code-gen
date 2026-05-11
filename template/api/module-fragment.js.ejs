@@ -1,0 +1,11 @@
+/**
+ * <%= componentName %> — 自动片段（若工程使用 proxy/rpc，可与 mixin-rpc 对齐后删除本段）
+ * 接口：<%= apiEndpoint || '(未从 Swagger 解析到路径)' %> 方法：<%= method %>
+ */
+export function <%= apiFunctionName %>(params) {
+  return request({
+    url: '<%= apiEndpoint || '/api/placeholder' %>',
+    method: '<%= method %>',
+    <%_ if (method === 'GET') { _%>params<%_ } else { _%>data: params<%_ } _%>,
+  })
+}
