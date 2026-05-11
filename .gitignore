@@ -1,0 +1,19 @@
+node_modules
+dist
+.DS_Store
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+yarn.lock
+package-lock.json
+
+.project
+.npmrc
+
+.history
